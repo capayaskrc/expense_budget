@@ -2,6 +2,13 @@
     table td,table th{
         padding: 3px !important;
     }
+
+
+    .card-image {
+        width: 100%; /* Set the image width to 100% of its parent container (the card) */
+        max-width: 100%; /* Ensure the image doesn't exceed the card width */
+        height: auto; /* Let the height
+        }
 </style>
 <?php 
 $date_start = isset($_GET['date_start']) ? $_GET['date_start'] :  date("Y-m-d",strtotime(date("Y-m-d")." -7 days")) ;
@@ -33,7 +40,7 @@ $date_end = isset($_GET['date_end']) ? $_GET['date_end'] :  date("Y-m-d") ;
         <hr>
         <div id="printable">
             <div>
-                <img src="../uploads/HEADER.png" width="1100px">
+                <img src="../uploads/HEADER.png" class="card-image">
                 <h4 class="text-center m-0"><?php echo $_settings->info('name') ?></h4>
                 <h3 class="text-center m-0"><b>Budget Report</b></h3>
                 <hr style="width:15%">
@@ -88,7 +95,7 @@ $date_end = isset($_GET['date_end']) ? $_GET['date_end'] :  date("Y-m-d") ;
                     </tr>
                 </tfoot>
             </table>
-            <img src="../uploads/FOOTER.png" width="1100px">
+            <img src="../uploads/FOOTER.png" class="card-image">
         </div>
     </div>
 </div>

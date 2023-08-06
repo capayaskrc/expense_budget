@@ -33,6 +33,7 @@ $date_end = isset($_GET['date_end']) ? $_GET['date_end'] :  date("Y-m-d") ;
         <hr>
         <div id="printable">
             <div>
+                <img src="../uploads/HEADER.png" width="1100px">
                 <h4 class="text-center m-0"><?php echo $_settings->info('name') ?></h4>
                 <h3 class="text-center m-0"><b>Budget Report</b></h3>
                 <hr style="width:15%">
@@ -87,6 +88,7 @@ $date_end = isset($_GET['date_end']) ? $_GET['date_end'] :  date("Y-m-d") ;
                     </tr>
                 </tfoot>
             </table>
+            <img src="../uploads/FOOTER.png" width="1100px">
         </div>
     </div>
 </div>

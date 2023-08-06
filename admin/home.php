@@ -12,7 +12,6 @@
           <div class="col-12 col-sm-6 col-md-4">
             <div class="info-box">
               <span class="info-box-icon bg-primary elevation-1"><i class="fas fa-money-bill-alt"></i></span>
-
               <div class="info-box-content">
                 <span class="info-box-text">Total Budget</span>
                 <br/>
@@ -24,15 +23,12 @@
                   <?php ?>
                 </span>
               </div>
-              <!-- /.info-box-content -->
             </div>
-            <!-- /.info-box -->
           </div>
           <!-- /.col -->
           <div class="col-12 col-sm-6 col-md-4">
             <div class="info-box mb-3">
               <span class="info-box-icon bg-info elevation-1"><i class="fas fa-calendar-day"></i></span>
-
               <div class="info-box-content">
                 <span class="info-box-text">Total Expense</span>
                 <br/>
@@ -43,31 +39,32 @@
                   ?>
                 </span>
               </div>
-              <!-- /.info-box-content -->
             </div>
-            <!-- /.info-box -->
           </div>
-          <!-- /.col -->
-
-          <!-- fix for small devices only -->
           <div class="clearfix hidden-md-up"></div>
-
           <div class="col-12 col-sm-6 col-md-4">
             <div class="info-box mb-3">
               <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-calendar-day"></i></span>
-
               <div class="info-box-content">
                 <span class="info-box-text">Remaining Balance</span>
                 <br/>
                 <span class="info-box-number text-right">
-                <?php 
-                    
-                  ?>
+                <?php
+                $query = "SELECT
+                            SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) AS total_budget,
+                            SUM(CASE WHEN balance_type = 2 THEN amount ELSE 0 END) AS total_expense,
+                            SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) - SUM(CASE WHEN balance_type = 2 THEN amount ELSE 0 END) AS remaining_balance
+                        FROM
+                            running_balance
+                        WHERE
+                            category_id IN (SELECT id FROM categories WHERE status = 1)
+                            AND DATE(date_created) = CURRENT_DATE";
+                $remaining_balance = $conn->query( $query)->fetch_assoc()['remaining_balance'];
+                echo number_format($remaining_balance);
+                ?>
                 </span>
               </div>
-              <!-- /.info-box-content -->
             </div>
-            <!-- /.info-box -->
           </div>
         </div>
 <div class="row">
@@ -82,11 +79,10 @@
 
  
  $query = "SELECT date_created, sum(amount) as total FROM running_balance GROUP BY year(date_created)";  
- $result2 = mysqli_query($connect, $query);  
+ $result2 = mysqli_query($connect, $query);
 
- 
-
- 
+    $query_budget_expense = "SELECT category, SUM(CASE WHEN balance_type = 1 THEN balance ELSE 0 END) AS total_budget, SUM(CASE WHEN balance_type = 2 THEN balance ELSE 0 END) AS total_expense FROM categories LEFT JOIN running_balance ON categories.id = running_balance.category_id GROUP BY category";
+    $result_budget_expense = mysqli_query($connect, $query_budget_expense);
 
  ?>
 
@@ -106,14 +102,13 @@
             google.charts.setOnLoadCallback(drawChart);
             function drawChart() {
 				//data
-                var data1 = google.visualization.arrayToDataTable([  
-                ['', 'Total Amount'],  
-                <?php  
-                while($row = mysqli_fetch_array($result1))  
-                {  
-                echo "['".$row["balance_type"]."', ".$row["total"]."],";  
-                }  
-                ?>  
+                var data1 = google.visualization.arrayToDataTable([
+                    ['', 'Total Amount', 'Remaining Balance'],
+                    <?php
+                    while ($row = mysqli_fetch_array($result1)) {
+                        echo "['" . $row["balance_type"] . "', " . $row["total"] . ", " . $row["result_budget_expense"] . "],";
+                    }
+                    ?>
                 ]);
 
 				var data = google.visualization.arrayToDataTable([  
@@ -153,7 +148,7 @@
                     hAxis : {
                         title: ''
                             },
-                    colors: ['#00FFFF', '#e6693e'],
+                    colors: ['#00FFFF', '#e6693e', '#68a71f'],
 
                       //is3D:true,
                 };
@@ -216,8 +211,6 @@
 	</div>
 	<div class="card-body">
 		<div class="container-fluid">
-        <div class="container-fluid">
-
 			<div class="page-inner">
 					<div class="row mt--2">
 						<div class="col-md-12">
@@ -226,8 +219,8 @@
                                 <div id="barchart_values1"  style="float: left;"></div>
                                 <div id="donutchart" style="float: left;"></div>
                                 <div style="clear: both;"></div>
-                            </div> 
-                             
+                            </div>
+
 						</div>
 					</div>
 				</div>
@@ -241,13 +234,13 @@
                                 <div id="columnchart_values2" style="float: left;"></div>
 								<div id=""  style="float: right;"></div>
                                 <div style="clear: both;"></div>
-                            </div> 
-                             
+                            </div>
+
 						</div>
 					</div>
 				</div>
 			</div>
-				
+
 
 		</div>
 	</div>

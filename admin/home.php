@@ -74,28 +74,6 @@
  $query = "SELECT category, sum(balance) as number FROM categories GROUP BY category";
  $result = mysqli_query($connect, $query);
 
-//    $query = "
-//    INSERT INTO amounts (balance_type, amount)
-//    SELECT
-//        1 AS balance_type,
-//        SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) AS amount
-//    FROM running_balance
-//    UNION ALL
-//    SELECT
-//        2 AS balance_type,
-//        SUM(CASE WHEN balance_type = 2 THEN amount ELSE 0 END) AS amount
-//    FROM running_balance
-//    UNION ALL
-//    SELECT
-//        3 AS balance_type,
-//        SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) - SUM(CASE WHEN balance_type = 2 THEN amount ELSE 0 END) AS amount
-//    FROM running_balance
-//";
-//    $result_save = mysqli_query($connect, $query);
-//
-//    $query_budget = "SELECT balance_type, amount FROM amounts";
-//    $result1 = mysqli_query($connect, $query_budget);
-
     $query = "
     SELECT
         SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) AS budget,

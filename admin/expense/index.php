@@ -17,8 +17,10 @@
 				<colgroup>
 					<col width="5%">
 					<col width="15%">
-					<col width="20%">
 					<col width="15%">
+					<col width="10%">
+                    <col width="10%">
+                    <col width="15%">
 					<col width="15%"> <!-- daterleaseadded-->
 					<col width="30%">
 					<col width="15%">
@@ -28,22 +30,29 @@
 						<th>#</th>
 						<th>Date Created</th>
 						<th>Category</th>
-						<th>Amount</th>
+						<th>Budget</th>
+                        <th>Spent</th>
+                        <th>Remaining Balance</th>
 						<th>Date Released</th> <!-- daterelease added-->
 						<th>Remarks</th>
 						<th>Action</th>
 					</tr>
 				</thead>
 				<tbody>
-					<?php 
-					$i = 1;
-						$qry = $conn->query("SELECT r.*,c.category,c.balance from `running_balance` r inner join `categories` c on r.category_id = c.id where c.status= 1 and r.balance_type = 2 order by unix_timestamp(r.date_created) desc");
-						while($row = $qry->fetch_assoc()):
-							foreach($row as $k=> $v){
-								$row[$k] = trim(stripslashes($v));
-							}
-                            $row['remarks'] = strip_tags(stripslashes(html_entity_decode($row['remarks'])));
-					?>
+					<?php
+                    $i = 1;
+                    $qry = $conn->query("SELECT r.*, c.category, c.balance FROM `running_balance` r INNER JOIN `categories` c ON r.category_id = c.id WHERE c.status = 1 AND r.balance_type = 2 ORDER BY unix_timestamp(r.date_created) DESC");
+                    while ($row = $qry->fetch_assoc()):
+                        foreach ($row as $k => $v) {
+                            $row[$k] = trim(stripslashes($v));
+                        }
+                        $row['remarks'] = strip_tags(stripslashes(html_entity_decode($row['remarks'])));
+                        $budget_result = $conn->query("SELECT SUM(amount) AS budget FROM `running_balance` WHERE balance_type = 1 AND category_id = {$row['category_id']}");
+                        $budget_row = $budget_result->fetch_assoc();
+                        // Calculate spent and remaining balances
+                        $spent = $row['amount'];
+                        $budget = $budget_row['budget'];
+                        $remaining_balance = $row['balance']?>
 						<tr>
 							<td class="text-center"><?php echo $i++; ?></td>
 							<!--<td><?php echo date("Y-m-d H:i",strtotime($row['date_created'])) ?></td>-->
@@ -51,21 +60,15 @@
 							<td ><p class=""><?php echo date("Y-m-d H:i",strtotime($row['date_created'])) ?></p></td>
 							<!---Date Created end----->
 							<td><?php echo $row['category'] ?></td>
-							<td ><p class="m-0 text-right"><?php echo number_format($row['amount']) ?></p></td>
-							<!---Date Release start----->
+                            <td><p class="m-0 text-right"><?php echo number_format($budget) ?></p></td>
+                            <td><p class="m-0 text-right"><?php echo number_format($spent) ?></p></td>
+                            <td><p class="m-0 text-right"><?php echo number_format($remaining_balance) ?></p></td>
+
+                            <!---Date Release start----->
 							<td ><p class=""><?php echo date("Y-m-d H:i",strtotime($row['daterelease'])) ?></p></td>
 							<!---Date Release end ----->
 							<td ><p class="m-0 truncate"><?php echo ($row['remarks']) ?></p></td>
 							<td align="center">
-								 <!--<button type="button" class="btn btn-flat btn-default btn-sm dropdown-toggle dropdown-icon" data-toggle="dropdown">
-				                  		Action
-				                    <span class="sr-only">Toggle Dropdown</span>
-				                  </button>
-				                  <div class="dropdown-menu" role="menu">
-				                    <a class="dropdown-item manage_expense" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>"><span class="fa fa-edit text-primary"></span> Edit</a>
-				                    <div class="dropdown-divider"></div>
-				                    <a class="dropdown-item delete_data" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>" data-category_id="<?php echo $row['category_id'] ?>"><span class="fa fa-trash text-danger"></span> Delete</a>
-				                  </div>-->
 								  <a class="manage_expense" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>"><span class="fa fa-edit text-primary"></span></a>
 				                  <a class="delete_data" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>" data-category_id="<?php echo $row['category_id'] ?>"><span class="fa fa-trash text-danger"></span></a>
 				                  

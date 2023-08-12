@@ -15,66 +15,95 @@
         <div class="container-fluid">
 			<table class="table table-bordered table-stripped">
 				<colgroup>
-					<col width="5%">
 					<col width="15%">
+					<col width="5%">
 					<col width="15%">
 					<col width="10%">
                     <col width="10%">
-                    <col width="15%">
-					<col width="15%"> <!-- daterleaseadded-->
-					<col width="30%">
-					<col width="15%">
+                    <col width="5%">
 				</colgroup>
 				<thead>
 					<tr>
-						<th>#</th>
-						<th>Date Created</th>
 						<th>Category</th>
+                        <th>Year</th>
 						<th>Budget</th>
                         <th>Spent</th>
                         <th>Remaining Balance</th>
-						<th>Date Released</th> <!-- daterelease added-->
-						<th>Remarks</th>
-						<th>Action</th>
+                        <th>Action</th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php
                     $i = 1;
-                    $qry = $conn->query("SELECT r.*, c.category, c.balance FROM `running_balance` r INNER JOIN `categories` c ON r.category_id = c.id WHERE c.status = 1 AND r.balance_type = 2 ORDER BY unix_timestamp(r.date_created) DESC");
-                    while ($row = $qry->fetch_assoc()):
-                        foreach ($row as $k => $v) {
-                            $row[$k] = trim(stripslashes($v));
-                        }
-                        $row['remarks'] = strip_tags(stripslashes(html_entity_decode($row['remarks'])));
-                        $budget_result = $conn->query("SELECT SUM(amount) AS budget FROM `running_balance` WHERE balance_type = 1 AND category_id = {$row['category_id']}");
-                        $budget_row = $budget_result->fetch_assoc();
-                        // Calculate spent and remaining balances
-                        $spent = $row['amount'];
-                        $budget = $budget_row['budget'];
-                        $remaining_balance = $row['balance']?>
-						<tr>
-							<td class="text-center"><?php echo $i++; ?></td>
-							<!--<td><?php echo date("Y-m-d H:i",strtotime($row['date_created'])) ?></td>-->
-							<!---Date Created start----->
-							<td ><p class=""><?php echo date("Y-m-d H:i",strtotime($row['date_created'])) ?></p></td>
-							<!---Date Created end----->
-							<td><?php echo $row['category'] ?></td>
-                            <td><p class="m-0 text-right"><?php echo number_format($budget) ?></p></td>
-                            <td><p class="m-0 text-right"><?php echo number_format($spent) ?></p></td>
-                            <td><p class="m-0 text-right"><?php echo number_format($remaining_balance) ?></p></td>
+                    $qry = $conn->query("SELECT 
+                    c.category, 
+                    c.balance, 
+                    YEAR(r.date_created) AS year,
+                    SUM(CASE WHEN r.balance_type = 1 THEN r.amount ELSE 0 END) AS budget,
+                    SUM(CASE WHEN r.balance_type = 2 THEN r.amount ELSE 0 END) AS spent
+                    FROM `running_balance` r 
+                    INNER JOIN `categories` c ON r.category_id = c.id 
+                    WHERE c.status = 1 
+                    GROUP BY c.category, c.balance, YEAR(r.date_created) 
+                    ORDER BY c.category, YEAR(r.date_created) DESC");
 
-                            <!---Date Release start----->
-							<td ><p class=""><?php echo date("Y-m-d H:i",strtotime($row['daterelease'])) ?></p></td>
-							<!---Date Release end ----->
-							<td ><p class="m-0 truncate"><?php echo ($row['remarks']) ?></p></td>
-							<td align="center">
-								  <a class="manage_expense" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>"><span class="fa fa-edit text-primary"></span></a>
-				                  <a class="delete_data" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>" data-category_id="<?php echo $row['category_id'] ?>"><span class="fa fa-trash text-danger"></span></a>
-				                  
-							</td>
-						</tr>
-					<?php endwhile; ?>
+                    $current_category = "";
+                    $current_year = "";
+
+                    while ($row = $qry->fetch_assoc()):
+                        // Check if a new category or year starts
+                        if ($current_category !== $row['category'] || $current_year !== $row['year']) {
+                            // Display the new row
+                            if ($current_category !== "") {
+                                // Close previous row
+                                echo "</tr>";
+                            }
+                            // Start new row
+                            echo "<tr>";
+                            echo "<td>{$row['category']}</td>";
+                            echo "<td>{$row['year']}</td>";
+                            // ... other columns ...
+                            echo "<td><p class='m-0 text-right'>" . number_format($row['budget']) . "</p></td>";
+                            echo "<td><p class='m-0 text-right'>" . number_format($row['spent']) . "</p></td>";
+                            echo "<td><p class='m-0 text-right'>" . number_format($row['budget'] - $row['spent']) . "</p></td>";
+                            // ... action column ...
+                            echo "<td align='center'>
+                                     <a class='manage_expense' href='javascript:void(0)' data-category='{$current_category}' data-year='{$current_year}'>
+                                    <span class='fa fa-edit text-primary'></span>
+                                  </a>
+                                   <a class='delete_data' href='javascript:void(0)' data-category='{$current_category}' data-year='{$current_year}'>
+                                    <span class='fa fa-trash text-danger'></span>
+                                  </a>
+                              </td>";
+                            echo "</tr>";
+                            // Update current category and year
+                            $current_category = $row['category'];
+                            $current_year = $row['year'];
+                        }
+                    endwhile;
+
+                    // Close the last row if it's not closed yet
+                    if ($current_category !== "") {
+                        echo "</tr>";
+                    }
+                        ?>
+<!--						<tr>-->
+<!--							<td class="text-center">--><?php //echo $i++; ?><!--</td>-->
+<!--							<td>--><?php //echo date("Y-m-d H:i",strtotime($row['date_created'])) ?><!--</td>-->
+<!--							Date Created start----->
+<!--							Date Created end----->
+<!--							<td>--><?php //echo $row['category'] ?><!--</td>-->
+<!--                            <td><p class="m-0 text-right">--><?php //echo number_format($row['budget']) ?><!--</p></td>-->
+<!--                            <td><p class="m-0 text-right">--><?php //echo number_format($row['spent']) ?><!--</p></td>-->
+<!--                            <td><p class="m-0 text-right">--><?php //echo number_format($remaining_balance) ?><!--</p></td>-->
+<!---->
+<!--                           Date Release start----->
+<!--							<td ><p class="">--><?php //echo date("Y-m-d H:i",strtotime($row['daterelease'])) ?><!--</p></td>-->
+<!--							Date Release end ----->
+<!--							<td ><p class="m-0 truncate">--><?php //echo ($row['remarks']) ?><!--</p></td>-->
+
+<!--						</tr>-->
+
 				</tbody>
 			</table>
 		</div>

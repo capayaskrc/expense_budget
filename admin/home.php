@@ -68,17 +68,46 @@
           </div>
         </div>
 <div class="row">
-    <?php  
- $connect = mysqli_connect("localhost", "root", "", "expense_budget_db");  
+    <?php
+ $connect = mysqli_connect("localhost", "root", "", "expense_budget_db");
 
- $query = "SELECT category, sum(balance) as number FROM categories GROUP BY category";  
+ $query = "SELECT category, sum(balance) as number FROM categories GROUP BY category";
  $result = mysqli_query($connect, $query);
- 
- $query = "SELECT balance_type, sum(amount) as total FROM running_balance GROUP BY balance_type";  
- $result1 = mysqli_query($connect, $query);  
 
- 
- $query = "SELECT date_created, sum(amount) as total FROM running_balance GROUP BY year(date_created)";  
+//    $query = "
+//    INSERT INTO amounts (balance_type, amount)
+//    SELECT
+//        1 AS balance_type,
+//        SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) AS amount
+//    FROM running_balance
+//    UNION ALL
+//    SELECT
+//        2 AS balance_type,
+//        SUM(CASE WHEN balance_type = 2 THEN amount ELSE 0 END) AS amount
+//    FROM running_balance
+//    UNION ALL
+//    SELECT
+//        3 AS balance_type,
+//        SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) - SUM(CASE WHEN balance_type = 2 THEN amount ELSE 0 END) AS amount
+//    FROM running_balance
+//";
+//    $result_save = mysqli_query($connect, $query);
+//
+//    $query_budget = "SELECT balance_type, amount FROM amounts";
+//    $result1 = mysqli_query($connect, $query_budget);
+
+    $query = "
+    SELECT
+        SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) AS budget,
+        SUM(CASE WHEN balance_type = 2 THEN amount ELSE 0 END) AS expense,
+        SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) - SUM(CASE WHEN balance_type = 2 THEN amount ELSE 0 END) AS remaining_balance
+    FROM running_balance
+";
+    $result = mysqli_query($connect, $query);
+    $row = mysqli_fetch_assoc($result);
+
+
+ $query = "SELECT date_created, sum(amount) as total FROM running_balance GROUP BY year(date_created)";
  $result2 = mysqli_query($connect, $query);
 
     $query_budget_expense = "SELECT category, SUM(CASE WHEN balance_type = 1 THEN balance ELSE 0 END) AS total_budget, SUM(CASE WHEN balance_type = 2 THEN balance ELSE 0 END) AS total_expense FROM categories LEFT JOIN running_balance ON categories.id = running_balance.category_id GROUP BY category";
@@ -103,12 +132,10 @@
             function drawChart() {
 				//data
                 var data1 = google.visualization.arrayToDataTable([
-                    ['', 'Total Amount', 'Remaining Balance'],
-                    <?php
-                    while ($row = mysqli_fetch_array($result1)) {
-                        echo "['" . $row["balance_type"] . "', " . $row["total"] . ", " . $row["result_budget_expense"] . "],";
-                    }
-                    ?>
+                    ['', 'Total Amount'],
+                    ['Budget', <?php echo $row["budget"]; ?>],
+                    ['Expense', <?php echo $row["expense"]; ?>],
+                    ['Remaining Balance', <?php echo $row["remaining_balance"]; ?>]
                 ]);
 
 				var data = google.visualization.arrayToDataTable([  
@@ -148,9 +175,9 @@
                     hAxis : {
                         title: ''
                             },
-                    colors: ['#00FFFF', '#e6693e', '#68a71f'],
+                    // colors: ['#00FFFF', '#e6693e', '#68a71f'],
 
-                      //is3D:true,
+                      // is3D:true,
                 };
 
                 	var options = {  

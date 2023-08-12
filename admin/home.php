@@ -103,15 +103,12 @@
         SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) - SUM(CASE WHEN balance_type = 2 THEN amount ELSE 0 END) AS remaining_balance
     FROM running_balance
 ";
-    $result = mysqli_query($connect, $query);
-    $row = mysqli_fetch_assoc($result);
+    $result1 = mysqli_query($connect, $query);
+    $row = mysqli_fetch_assoc($result1);
 
 
  $query = "SELECT date_created, sum(amount) as total FROM running_balance GROUP BY year(date_created)";
  $result2 = mysqli_query($connect, $query);
-
-    $query_budget_expense = "SELECT category, SUM(CASE WHEN balance_type = 1 THEN balance ELSE 0 END) AS total_budget, SUM(CASE WHEN balance_type = 2 THEN balance ELSE 0 END) AS total_expense FROM categories LEFT JOIN running_balance ON categories.id = running_balance.category_id GROUP BY category";
-    $result_budget_expense = mysqli_query($connect, $query_budget_expense);
 
  ?>
 

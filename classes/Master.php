@@ -139,60 +139,108 @@ Class Master extends DBConnection {
 		}
 		return json_encode($resp);
 	}
-	function save_expense(){
-		extract($_POST);
-		$_POST['amount'] = str_replace(',','',$_POST['amount']);
-		$_POST['remarks'] = addslashes(htmlentities($_POST['remarks']));
-		$data = "";
-		foreach($_POST as $k =>$v){
-			if($k == 'id')
-				continue;
-			if(!empty($data)) $data .=",";
-			$data .= " `{$k}`='{$v}' ";
-		}
-		if(!empty($data)) $data .=",";
-			$data .= " `user_id`='{$this->settings->userdata('id')}' ";
-		if(empty($id)){
-			$sql = "INSERT INTO `running_balance` set $data";
-		}else{
-			$sql = "UPDATE `running_balance` set $data WHERE id ='{$id}'";
-		}
-		$save = $this->conn->query($sql);
-		if($save){
-			$update_balance =$this->update_balance($_POST['category_id']);
-			
-			if($update_balance == 1){
-				$resp['status'] ='success';
-				$this->settings->set_flashdata('success'," Expense successfully saved.");
-			}else{
-				$resp['status'] = 'failed';
-				$resp['error'] = $update_balance;
-			}
-		}else{
-			$resp['status'] = 'failed';
-			$resp['error'] = $this->conn;
-		}
-		return json_encode($resp);
-	}
+    function save_expense()
+    {
+        extract($_POST);
+        $_POST['amount'] = str_replace(',', '', $_POST['amount']);
+        $_POST['remarks'] = addslashes(htmlentities($_POST['remarks']));
+        $_POST['expense_title'] = addslashes(htmlentities($_POST['expense_title']));
 
-	function delete_expense(){
-		extract($_POST);
-		$del = $this->conn->query("DELETE FROM `running_balance` where id = '{$id}'");
-		if($del){
-			$update_balance =$this->update_balance($category_id);
-			if($update_balance == 1){
-				$resp['status'] ='success';
-				$this->settings->set_flashdata('success',"Expense successfully deleted.");
-			}else{
-				$resp['status'] = 'failed';
-				$resp['error'] = $update_balance;
-			}
-		}else{
-			$resp['status'] = 'failed';
-			$resp['error'] = $this->conn->error;
-		}
-		return json_encode($resp);
-	}
+        $data = array(); // Create an array to store column-value pairs
+
+        // Add the expense_title to the data array
+        $data['expense_title'] = $_POST['expense_title'];
+
+        // Loop through other POST data and add to the data array
+        foreach ($_POST as $k => $v) {
+            if ($k == 'id' || $k == 'expense_title') {
+                continue;
+            }
+            $data[$k] = $v;
+        }
+
+        // Include user_id in the data array
+        $data['user_id'] = $this->settings->userdata('id');
+
+        if (empty($id)) {
+            // Check if an expense with the same title exists for the current user
+            $existingExpense = $this->conn->query("SELECT * FROM `running_balance` WHERE `expense_title` = '{$data['expense_title']}' AND `user_id` = '{$data['user_id']}' LIMIT 1");
+            if ($existingExpense->num_rows > 0) {
+                // An expense with the same title exists, update it instead of inserting a new one
+                $row = $existingExpense->fetch_assoc();
+                $id = $row['id'];
+            }
+        }
+
+        if (empty($id)) {
+            // Construct the SQL query using the data array for a new record
+            $sql = "INSERT INTO `running_balance` SET ";
+            foreach ($data as $key => $value) {
+                $sql .= "`$key`='$value', ";
+            }
+            $sql = rtrim($sql, ', '); // Remove the trailing comma and space
+        } else {
+            // Construct the SQL query for an update
+            $sql = "UPDATE `running_balance` SET ";
+            foreach ($data as $key => $value) {
+                $sql .= "`$key`='$value', ";
+            }
+            $sql = rtrim($sql, ', '); // Remove the trailing comma and space
+            $sql .= " WHERE id ='{$id}'";
+        }
+
+        $save = $this->conn->query($sql);
+        if ($save) {
+            $update_balance = $this->update_balance($_POST['category_id']);
+
+            if ($update_balance == 1) {
+                $resp['status'] = 'success';
+                $this->settings->set_flashdata('success', "Expense successfully saved.");
+            } else {
+                $resp['status'] = 'failed';
+                $resp['error'] = $update_balance;
+            }
+        } else {
+            $resp['status'] = 'failed';
+            $resp['error'] = $this->conn->error;
+        }
+        return json_encode($resp);
+    }
+
+
+    function delete_expense() {
+        extract($_POST);
+        $del = $this->conn->query("DELETE FROM `running_balance` WHERE id = '{$id}'");
+
+        if ($del) {
+            // Check if this is the last record with the same category_id
+            $expenseCount = $this->conn->query("SELECT COUNT(*) as count FROM `running_balance` WHERE `category_id` = '{$category_id}'");
+
+            if ($expenseCount->num_rows > 0) {
+                $countRow = $expenseCount->fetch_assoc();
+                $count = (int) $countRow['count'];
+
+                if ($count === 0) {
+                    // Update the expense based on the category_id if it's the last record with the same category_id
+                    $update_balance = $this->update_balance($category_id);
+
+                    if ($update_balance != 1) {
+                        $resp['status'] = 'failed';
+                        $resp['error'] = $update_balance;
+                        return json_encode($resp);
+                    }
+                }
+            }
+
+            $resp['status'] = 'success';
+            $this->settings->set_flashdata('success', "Expense successfully deleted.");
+        } else {
+            $resp['status'] = 'failed';
+            $resp['error'] = $this->conn->error;
+        }
+
+        return json_encode($resp);
+    }
 }
 
 $Master = new Master();

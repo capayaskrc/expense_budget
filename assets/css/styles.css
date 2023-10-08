@@ -10733,3 +10733,26 @@ input.cart-qty[type=number] {
         display: block !important;
     }
 }
+
+
+/* Style for the container holding each category */
+.category-container {
+    display: flex;
+    justify-content: space-between;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+/* Style for the category title */
+.category-title {
+    font-weight: bold;
+}
+
+/* Style for the year, budget, and total spent */
+.category-year,
+.category-budget,
+.category-total-spent {
+    flex-basis: 25%;
+    text-align: center;
+}

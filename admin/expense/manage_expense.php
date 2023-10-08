@@ -52,6 +52,11 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
             <input type="hidden" id="balance" value="<?php echo $balance ?>">
         </div>
     <?php endif; ?>
+
+    <div class="form-group">
+        <label for="expense_title" class="control-label">Expense Title</label>
+        <input type="text" class="form-control" name="expense_title" value="<?php echo isset($expense_title) ? ($expense_title) : ''; ?>" required>
+    </div>
     <div class="form-group">
         <label for="amount" class="control-label">Amount</label>
         <input name="amount" id="amount" class="form-control form text-right number" value="<?php echo isset($amount) ? ($amount) : 0; ?>">
@@ -69,7 +74,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 </form>
 </div>
 <script>
-  
+
 	$(document).ready(function(){
         $('.select2').select2({placeholder:"Please Select here",width:"relative"})
         $('.number').on('load input change',function(){
@@ -103,7 +108,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
             var cat_balance = $('#balance').length > 0 ? $('#balance').val() : $("[name='category_id'] option[value='"+cat_id+"']").attr('data-balance');
             var amount = $("[name='amount']").val();
                 amount = amount.replace(/,/g,"");
-                console.log(cat_balance,amount)
+                 console.log(cat_balance,amount)
                 console.log(amount > cat_balance)
             if(parseFloat(amount) > parseFloat(cat_balance)){
                 var el = $('<div>')
@@ -131,7 +136,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 				success:function(resp){
 					if(typeof resp =='object' && resp.status == 'success'){
 						location.reload()
-					}else if(resp.status == 'failed' && !!resp.msg){
+					}else if(resp.status === 'failed' && !!resp.msg){
                         var el = $('<div>')
                             el.addClass("alert alert-danger err-msg").text(resp.msg)
                             _this.prepend(el)

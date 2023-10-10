@@ -16,9 +16,18 @@
                 <span class="info-box-text">Total Budget</span>
                 <br/>
                 <span class="info-box-number text-right">
-                  <?php 
-                    $today_budget = $conn->query("SELECT sum(amount) as total FROM `running_balance` where category_id in (SELECT id FROM categories where status =1) and date(date_created) = '".(date("Y-m-d"))."' and balance_type = 1 ")->fetch_assoc()['total'];
-                    echo number_format($today_budget);
+                  <?php
+                  $year_to_query = date("Y"); // Change this to the desired year
+
+                  $yearly_budget = $conn->query("
+    SELECT SUM(amount) AS total
+    FROM `running_balance`
+    WHERE category_id IN (SELECT id FROM categories WHERE status = 1)
+    AND YEAR(date_created) = '$year_to_query'
+    AND balance_type = 1
+")->fetch_assoc()['total'];
+
+                  echo number_format($yearly_budget);
                   ?>
                   <?php ?>
                 </span>
@@ -33,9 +42,19 @@
                 <span class="info-box-text">Total Expense</span>
                 <br/>
                 <span class="info-box-number text-right">
-                  <?php 
-                   $today_expense = $conn->query("SELECT sum(amount) as total FROM `running_balance` where category_id in (SELECT id FROM categories where status =1) and date(date_created) = '".(date("Y-m-d"))."' and balance_type = 2 ")->fetch_assoc()['total'];
-                    echo number_format($today_expense);
+                  <?php
+                  $year_to_query = date("Y"); // Change this to the desired year
+
+                  $yearly_expense = $conn->query("
+    SELECT SUM(amount) AS total
+    FROM `running_balance`
+    WHERE category_id IN (SELECT id FROM categories WHERE status = 1)
+    AND YEAR(date_created) = '$year_to_query'
+    AND balance_type = 2
+")->fetch_assoc()['total'];
+
+                  echo number_format($yearly_expense);
+
                   ?>
                 </span>
               </div>
@@ -50,17 +69,22 @@
                 <br/>
                 <span class="info-box-number text-right">
                 <?php
-                $query = "SELECT
-                            SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) AS total_budget,
-                            SUM(CASE WHEN balance_type = 2 THEN amount ELSE 0 END) AS total_expense,
-                            SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) - SUM(CASE WHEN balance_type = 2 THEN amount ELSE 0 END) AS remaining_balance
-                        FROM
-                            running_balance
-                        WHERE
-                            category_id IN (SELECT id FROM categories WHERE status = 1)
-                            AND DATE(date_created) = CURRENT_DATE";
-                $remaining_balance = $conn->query( $query)->fetch_assoc()['remaining_balance'];
+                $year_to_query = date("Y"); // Change this to the desired year
+
+                $query = "
+    SELECT
+        SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) AS total_budget,
+        SUM(CASE WHEN balance_type = 2 THEN amount ELSE 0 END) AS total_expense,
+        SUM(CASE WHEN balance_type = 1 THEN amount ELSE 0 END) - SUM(CASE WHEN balance_type = 2 THEN amount ELSE 0 END) AS remaining_balance
+    FROM
+        running_balance
+    WHERE
+        category_id IN (SELECT id FROM categories WHERE status = 1)
+        AND YEAR(date_created) = '$year_to_query'";
+
+                $remaining_balance = $conn->query($query)->fetch_assoc()['remaining_balance'];
                 echo number_format($remaining_balance);
+
                 ?>
                 </span>
               </div>
@@ -123,21 +147,24 @@
                 ?>  
                 ]);
 
-				
 
-				var data2 = google.visualization.arrayToDataTable([  
-                ['', 'Total Amount'],  
-                <?php  
-                while($row = mysqli_fetch_array($result2))  
-                {  
-                echo "['".$row["date_created"]."', ".$row["total"]."],";  
-                }  
-                ?>  
+
+                var data2 = google.visualization.arrayToDataTable([
+                    ['', 'Total Amount'],
+                    <?php
+                    while ($row = mysqli_fetch_array($result2))
+                    {
+                        // Extract the year from the date_created column
+                        $year = date("Y", strtotime($row["date_created"]));
+                        echo "['" . $year . "', " . $row["total"] . "],";
+                    }
+                    ?>
                 ]);
 
-				
 
-				//option
+
+
+                //option
 
 
 				var options1 = {

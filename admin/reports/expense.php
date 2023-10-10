@@ -50,8 +50,9 @@ $date_end = isset($_GET['date_end']) ? $_GET['date_end'] :  date("Y-m-d") ;
             <table class="table table-bordered">
                 <colgroup>
                     <col width="5%">                
-                    <col width="20%">                
-                    <col width="25%">                
+                    <col width="15%">
+                    <col width="15%">
+                    <col width="15%">
                     <col width="15%">                
                     <col width="35%">                
                 </colgroup>
@@ -60,27 +61,31 @@ $date_end = isset($_GET['date_end']) ? $_GET['date_end'] :  date("Y-m-d") ;
                         <th class="text-center">#</th>
                         <th>Entry DateTime</th>
                         <th>Category</th>
+                        <th>Expense Name</th>
                         <th>Amount</th>
                         <th>Remarks</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php 
-                    $i = 1;
-                    $total = 0;
-                        $qry = $conn->query("SELECT r.*,c.category,c.balance from `running_balance` r inner join `categories` c on r.category_id = c.id where c.status=1 and r.balance_type = 2 and date(r.date_created) between '{$date_start}' and '{$date_end}' order by unix_timestamp(r.date_created) asc");
-                        while($row = $qry->fetch_assoc()):
-                            $row['remarks'] = (stripslashes(html_entity_decode($row['remarks'])));
-                            $total += $row['amount'];
-                    ?>
-                    <tr>
-                        <td class="text-center"><?php echo $i++ ?></td>
-                        <td><?php echo date("M d, Y",strtotime($row['date_created'])) ?></td>
-                        <td><?php echo $row['category'] ?></td>
-                        <td class="text-right"><?php echo number_format($row['amount']) ?></td>
-                        <td><div><?php echo $row['remarks'] ?></div></td>
-                    </tr>
-                    <?php endwhile; ?>
+                        <?php
+                        $i = 1;
+                        $total = 0;
+                        $i = 1;
+                        $total = 0;
+                        $qry = $conn->query("SELECT r.*, c.category, c.balance, r.expense_title FROM `running_balance` r INNER JOIN `categories` c ON r.category_id = c.id WHERE c.status = 1 AND r.balance_type = 2 AND DATE(r.date_created) BETWEEN '{$date_start}' AND '{$date_end}' ORDER BY UNIX_TIMESTAMP(r.date_created) ASC");
+                            while($row = $qry->fetch_assoc()):
+                                $row['remarks'] = (stripslashes(html_entity_decode($row['remarks'])));
+                                $total += $row['amount'];
+                        ?>
+                        <tr>
+                            <td class="text-center"><?php echo $i++ ?></td>
+                            <td><?php echo date("M d, Y",strtotime($row['date_created'])) ?></td>
+                            <td><?php echo $row['category'] ?></td>
+                            <td><?php echo $row['expense_title'] ?></td>
+                            <td class="text-right"><?php echo number_format($row['amount']) ?></td>
+                            <td><div><?php echo $row['remarks'] ?></div></td>
+                        </tr>
+                        <?php endwhile; ?>
                     <?php if($qry->num_rows <= 0): ?>
                     <tr>
                         <td class="text-center" colspan="5">No Data...</td>
@@ -89,7 +94,7 @@ $date_end = isset($_GET['date_end']) ? $_GET['date_end'] :  date("Y-m-d") ;
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td class="text-right px-3" colspan="3"><b>Total</b></td>
+                        <td class="text-right px-3" colspan="4"><b>Total</b></td>
                         <td class="text-right"><b><?php echo number_format($total) ?></b></td>
                         <td class="bg-gray"></td>
                     </tr>

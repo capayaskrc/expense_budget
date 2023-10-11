@@ -6,9 +6,19 @@
 
     .card-image {
         width: 100%; /* Set the image width to 100% of its parent container (the card) */
-        max-width: 100%; /* Ensure the image doesn't exceed the card width */
-        height: auto; /* Let the height
+        min-width: 80%; /* Ensure the image doesn't exceed the card width */
+        height: 100%; /* Set the height to 100% to fill the card vertically */
+        object-fit: cover; /* Make the image fit while maintaining its aspect ratio */
+        display: block; /* Ensures block-level display to work with margin: 0 auto; */
+        margin: 0 auto; /* Center the image horizontally */
+    }
+    @media print {
+        .card-image {
+            max-width: 100% !important;
+            height: auto !important;
         }
+    }
+
 </style>
 <?php 
 $date_start = isset($_GET['date_start']) ? $_GET['date_start'] :  date("Y-m-d",strtotime(date("Y-m-d")." -7 days")) ;
@@ -39,8 +49,8 @@ $date_end = isset($_GET['date_end']) ? $_GET['date_end'] :  date("Y-m-d") ;
         </form>
         <hr>
         <div id="printable">
+            <img src="../uploads/HEADER.png" class="card-image">
             <div>
-                <img src="../uploads/HEADER.png" class="card-image">
                 <h4 class="text-center m-0"><?php echo $_settings->info('name') ?></h4>
                 <h3 class="text-center m-0"><b>Expense Report</b></h3>
                 <hr style="width:15%">
@@ -100,7 +110,6 @@ $date_end = isset($_GET['date_end']) ? $_GET['date_end'] :  date("Y-m-d") ;
                     </tr>
                 </tfoot>
             </table>
-            <img src="../uploads/FOOTER.png" class="card-image">
         </div>
     </div>
 </div>
@@ -111,21 +120,29 @@ $date_end = isset($_GET['date_end']) ? $_GET['date_end'] :  date("Y-m-d") ;
             location.href = "./?page=reports/budget&date_start="+$('[name="date_start"]').val()+"&date_end="+$('[name="date_end"]').val()
         })
 
-        $('#printBTN').click(function(){
+        $('#printBTN').click(function () {
             var rep = $('#printable').clone();
+            start_loader();
             var ns = $('head').clone();
-            start_loader()
-            rep.prepend(ns)
-            var nw = window.document.open('','_blank','width=900,height=600')
-                nw.document.write(rep.html())
-                nw.document.close()
-                setTimeout(function(){
-                    nw.print()
-                    setTimeout(function(){
-                        nw.close()
-                        end_loader()
-                    },500)
-                },500)
-        })
+
+            rep.prepend(ns);
+
+            var nw = window.document.open('', '_blank', 'width=900,height=600');
+            nw.document.write(rep.html());
+            nw.document.close();
+
+            // Add a CSS rule for printing to make the image flexible
+            var printStyles = '<style>@media print { .card-image { max-width: 100%; height: auto; } }</style>';
+            nw.document.head.innerHTML += printStyles;
+
+            setTimeout(function () {
+                nw.print();
+                setTimeout(function () {
+                    nw.close();
+                    end_loader();
+                }, 500);
+            }, 500);
+        });
+
     })
 </script>

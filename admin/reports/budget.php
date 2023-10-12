@@ -95,7 +95,6 @@ $date_end = isset($_GET['date_end']) ? $_GET['date_end'] :  date("Y-m-d") ;
                     </tr>
                 </tfoot>
             </table>
-            <img src="../uploads/FOOTER.png" class="card-image">
         </div>
     </div>
 </div>
@@ -106,21 +105,28 @@ $date_end = isset($_GET['date_end']) ? $_GET['date_end'] :  date("Y-m-d") ;
             location.href = "./?page=reports/budget&date_start="+$('[name="date_start"]').val()+"&date_end="+$('[name="date_end"]').val()
         })
 
-        $('#printBTN').click(function(){
+        $('#printBTN').click(function () {
             var rep = $('#printable').clone();
+            start_loader();
             var ns = $('head').clone();
-            start_loader()
-            rep.prepend(ns)
-            var nw = window.document.open('','_blank','width=900,height=600')
-                nw.document.write(rep.html())
-                nw.document.close()
-                setTimeout(function(){
-                    nw.print()
-                    setTimeout(function(){
-                        nw.close()
-                        end_loader()
-                    },500)
-                },500)
-        })
+
+            rep.prepend(ns);
+
+            var nw = window.document.open('', '_blank', 'width=900,height=600');
+            nw.document.write(rep.html());
+            nw.document.close();
+
+            // Add a CSS rule for printing to make the image flexible
+            var printStyles = '<style>@media print { .card-image { max-width: 100%; height: auto; } }</style>';
+            nw.document.head.innerHTML += printStyles;
+
+            setTimeout(function () {
+                nw.print();
+                setTimeout(function () {
+                    nw.close();
+                    end_loader();
+                }, 500);
+            }, 500);
+        });
     })
 </script>
